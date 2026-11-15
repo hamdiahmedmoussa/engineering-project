@@ -5,23 +5,26 @@
 #include "../bras-gestes/protocole.h"
 
 int main() {
-  Commande c = lireLigne("A 90 45 120 60");
+  Commande c = lireLigne("A 90 45 120 100 30 40 50 60 70");
   assert(c.type == TypeCommande::Angles);
-  assert(c.angles[0] == 90 && c.angles[1] == 45 && c.angles[2] == 120 && c.angles[3] == 60);
+  const int attendu[NB_SERVOS] = {90, 45, 120, 100, 30, 40, 50, 60, 70};
+  for (int i = 0; i < NB_SERVOS; i++) assert(c.angles[i] == attendu[i]);
 
-  assert(lireLigne("A 90 45 120 60\r").type == TypeCommande::Angles);  // fin de ligne Windows
+  assert(lireLigne("A 90 90 90 90 20 20 20 20 20\r").type == TypeCommande::Angles);  // fin de ligne Windows
   assert(lireLigne("R").type == TypeCommande::Repos);
   assert(lireLigne("R\r").type == TypeCommande::Repos);
 
   // Refusées : hors limites, incomplètes, abîmées, inconnues.
-  assert(lireLigne("A 180 45 120 60").type == TypeCommande::Refusee);  // base > 170
-  assert(lireLigne("A 90 45 120 10").type == TypeCommande::Refusee);   // pince < 30
-  assert(lireLigne("A 90 45 120").type == TypeCommande::Refusee);
-  assert(lireLigne("A 90 45 120 60 99").type == TypeCommande::Refusee);
-  assert(lireLigne("A 90 4x 120 60").type == TypeCommande::Refusee);
+  assert(lireLigne("A 180 90 90 90 20 20 20 20 20").type == TypeCommande::Refusee);  // base > 170
+  assert(lireLigne("A 90 90 90 90 20 20 20 20 170").type == TypeCommande::Refusee);  // auriculaire > 160
+  assert(lireLigne("A 90 90 90 90 10 20 20 20 20").type == TypeCommande::Refusee);   // pouce < 20
+  assert(lireLigne("A 90 90 90 90 20 20 20 20").type == TypeCommande::Refusee);      // 8 angles
+  assert(lireLigne("A 90 90 90 90 20 20 20 20 20 20").type == TypeCommande::Refusee); // 10 angles
+  assert(lireLigne("A 90 9x 90 90 20 20 20 20 20").type == TypeCommande::Refusee);
+  assert(lireLigne("A -90 90 90 90 20 20 20 20 20").type == TypeCommande::Refusee);
+  assert(lireLigne("A90 90 90 90 20 20 20 20 20").type == TypeCommande::Refusee);
   assert(lireLigne("Repos").type == TypeCommande::Refusee);
   assert(lireLigne("").type == TypeCommande::Refusee);
-  assert(lireLigne("B 90 45 120 60").type == TypeCommande::Refusee);
 
   std::puts("Tous les tests passent.");
   return 0;

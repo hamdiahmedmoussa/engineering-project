@@ -1,6 +1,6 @@
 /*
   LA CAMÉRA ET LA DÉTECTION DE LA MAIN (même principe que le drone)
-  À chaque image, MediaPipe donne les 21 points de la main (ou rien) ;
+  À chaque image, MediaPipe donne les 21 points de la main (dans l'image ET en 3D), ou rien ;
   on les dessine, puis on les transmet à « surMain ».
   Tout se passe dans le navigateur : l'image de la caméra n'est envoyée nulle part.
 */
@@ -24,7 +24,8 @@ async function creerDetecteur(): Promise<HandLandmarker> {
   }
 }
 
-export function useCamera(surMain: (main: Point[] | null) => void) {
+/** surMain reçoit les points dans l'image (position) et en 3D (forme de la main), ou null sans main. */
+export function useCamera(surMain: (main: Point[] | null, monde: Point[] | null) => void) {
   const video = useRef<HTMLVideoElement>(null);
   const dessin = useRef<HTMLCanvasElement>(null);
   const [statut, setStatut] = useState<StatutCamera>("arret");
@@ -63,7 +64,7 @@ export function useCamera(surMain: (main: Point[] | null) => void) {
             outils.drawConnectors(main, HandLandmarker.HAND_CONNECTIONS, { color: "#e6a23c", lineWidth: 3 });
             outils.drawLandmarks(main, { color: "#fffaf3", radius: 3 });
           }
-          rappel.current(main);
+          rappel.current(main, resultat.worldLandmarks[0] ?? null);
         }
         image = requestAnimationFrame(boucle);
       };

@@ -1,27 +1,36 @@
 /*
-  BRAS ROBOT PILOTÉ PAR LA MAIN · côté ESP32
-  La page web (Chrome ou Edge) envoie par USB des lignes « A base épaule coude pince ».
-  L'ESP32 vérifie chaque ligne (protocole.h), puis déplace les 4 servos DOUCEMENT vers les angles
-  demandés (au plus 3° toutes les 15 ms), même si la page envoyait un saut brutal.
+  BRAS ET MAIN ROBOTIQUES PILOTÉS PAR LA MAIN · côté ESP32
+  La page web (Chrome ou Edge) envoie par USB des lignes de 9 angles (voir protocole.h).
+  L'ESP32 vérifie chaque ligne, puis déplace les 9 servos DOUCEMENT (au plus 3° toutes les 15 ms).
 
-  Bibliothèque à installer : « ESP32Servo » (Outils → Gérer les bibliothèques).
-  ⚠️ Les servos s'alimentent avec une alimentation 5 V séparée, JAMAIS par la broche 5 V de l'ESP32.
+  Les servos sont branchés sur une carte PCA9685 (16 sorties), reliée à l'ESP32 par I2C :
+  elle génère elle-même les signaux des servos, et reçoit leur alimentation sur son bornier « V+ ».
+
+  Bibliothèque à installer : « Adafruit PWM Servo Driver Library ».
+  ⚠️ Les servos s'alimentent avec une alimentation 5-6 V séparée et puissante (voir README).
 */
-#include <ESP32Servo.h>
+#include <Wire.h>
+#include <Adafruit_PWMServoDriver.h>
 #include "limites.h"
 #include "protocole.h"
 
-Servo servos[NB_SERVOS];
+Adafruit_PWMServoDriver carte;   // adresse I2C par défaut : 0x40 ; SDA = GPIO21, SCL = GPIO22
 float actuels[NB_SERVOS];
 int cibles[NB_SERVOS];
 
-char tampon[48];
+char tampon[64];
 int longueur = 0;
 unsigned long dernierPas = 0, derniereCommande = 0;
 bool enAttente = false;
 
-const float PAS_MAX = 3.0;          // degrés par pas…
-const unsigned long PERIODE_MS = 15; // … toutes les 15 ms (environ 200 °/s au maximum)
+const float PAS_MAX = 3.0;            // degrés par pas…
+const unsigned long PERIODE_MS = 15;  // … toutes les 15 ms (environ 200 °/s au maximum)
+
+/** Un angle (0 à 180°) devient une impulsion de 500 à 2400 µs, envoyée sur la sortie du servo. */
+void ecrireAngle(int servo, float angle) {
+  const int us = 500 + (int)(angle / 180.0f * 1900.0f);
+  carte.writeMicroseconds(CANAUX[servo], us);
+}
 
 void traiterLigne() {
   tampon[longueur] = '\0';
@@ -43,11 +52,13 @@ void traiterLigne() {
 
 void setup() {
   Serial.begin(115200);
+  carte.begin();
+  carte.setOscillatorFrequency(27000000);
+  carte.setPWMFreq(50);  // les servos de modélisme attendent 50 impulsions par seconde
+  delay(10);
   for (int i = 0; i < NB_SERVOS; i++) {
-    servos[i].setPeriodHertz(50);               // les servos de modélisme attendent 50 impulsions par seconde
-    servos[i].attach(BROCHES[i], 500, 2400);    // impulsion de 0,5 ms (0°) à 2,4 ms (180°)
     actuels[i] = cibles[i] = REPOS[i];
-    servos[i].write(REPOS[i]);
+    ecrireAngle(i, REPOS[i]);
   }
   Serial.println("Bras prêt, en position de repos");
 }
@@ -73,7 +84,7 @@ void loop() {
       const float ecart = cibles[i] - actuels[i];
       if (ecart == 0) continue;
       actuels[i] += ecart > PAS_MAX ? PAS_MAX : (ecart < -PAS_MAX ? -PAS_MAX : ecart);
-      servos[i].write((int)roundf(actuels[i]));
+      ecrireAngle(i, actuels[i]);
     }
   }
 

@@ -1,13 +1,13 @@
 /*
   LIRE ET VÉRIFIER UNE LIGNE REÇUE PAR USB (sans rien qui dépende de l'ESP32 : testé sur ordinateur)
-    "A 90 45 120 60"  → 4 angles (base, épaule, coude, pince)
-    "R"               → position de repos
+    "A 90 90 90 90 20 20 20 20 20" → 9 angles (voir l'ordre dans limites.h)
+    "R"                            → position de repos
   Tout le reste est REFUSÉ, y compris un angle hors limites : le bras ne bouge jamais sur un
   message abîmé (câble, bug, mauvais programme qui envoie n'importe quoi).
 */
 #pragma once
-#include <stdio.h>
 #include <ctype.h>
+#include <stdlib.h>
 #include "limites.h"
 
 enum class TypeCommande { Refusee, Angles, Repos };
@@ -17,23 +17,34 @@ struct Commande {
   int angles[NB_SERVOS];
 };
 
+/** Vrai s'il ne reste que des espaces (ou \r) à partir de p. */
+inline bool finDeLigne(const char* p) {
+  for (; *p; p++) if (!isspace((unsigned char)*p)) return false;
+  return true;
+}
+
 inline Commande lireLigne(const char* ligne) {
-  Commande c{TypeCommande::Refusee, {0, 0, 0, 0}};
+  Commande c{TypeCommande::Refusee, {}};
   while (*ligne == ' ') ligne++;
 
   if (ligne[0] == 'R') {
-    for (const char* p = ligne + 1; *p; p++) if (!isspace((unsigned char)*p)) return c;
-    c.type = TypeCommande::Repos;
+    if (finDeLigne(ligne + 1)) c.type = TypeCommande::Repos;
     return c;
   }
+  if (ligne[0] != 'A' || ligne[1] != ' ') return c;
 
-  int lus = 0;
-  // %n : nombre de caractères lus, pour vérifier qu'il n'y a rien d'autre après les 4 angles.
-  if (sscanf(ligne, "A %d %d %d %d%n", &c.angles[0], &c.angles[1], &c.angles[2], &c.angles[3], &lus) != 4) return c;
-  for (const char* p = ligne + lus; *p; p++) if (!isspace((unsigned char)*p)) return c;
+  const char* p = ligne + 2;
   for (int i = 0; i < NB_SERVOS; i++) {
-    if (c.angles[i] < LIMITE_MIN[i] || c.angles[i] > LIMITE_MAX[i]) return c;
+    while (*p == ' ') p++;
+    if (!isdigit((unsigned char)*p)) return c;      // pas de signe moins, pas de lettre
+    char* fin;
+    const long v = strtol(p, &fin, 10);
+    if (*fin != ' ' && *fin != '\0' && *fin != '\r' && *fin != '\n') return c;  // ex. « 4x »
+    if (v < LIMITE_MIN[i] || v > LIMITE_MAX[i]) return c;
+    c.angles[i] = (int)v;
+    p = fin;
   }
+  if (!finDeLigne(p)) return c;  // trop de nombres
   c.type = TypeCommande::Angles;
   return c;
 }

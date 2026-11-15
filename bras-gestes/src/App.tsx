@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { lisser, mainVersAngles, type Point } from "./bras/angles";
 import { dessinerBras } from "./bras/dessinerBras";
 import { aChange, ligneAngles } from "./bras/protocole";
-import { ANGLES_REPOS, ARTICULATIONS, NOMS, type Angles } from "./bras/reglages";
+import { ANGLES_REPOS, DOIGTS, NOMS, type Angles, type Articulation } from "./bras/reglages";
 import { useLienUsb } from "./bras/useLienUsb";
 import { useCamera } from "./useCamera";
 
@@ -20,9 +20,9 @@ type Mode = "suivi" | "pause" | "repos";
 
 export default function App() {
   const lien = useLienUsb();
-  const derniereMain = useRef<{ main: Point[]; t: number } | null>(null);
-  const camera = useCamera((main) => {
-    if (main) derniereMain.current = { main, t: performance.now() };
+  const derniereMain = useRef<{ main: Point[]; monde: Point[]; t: number } | null>(null);
+  const camera = useCamera((main, monde) => {
+    if (main && monde) derniereMain.current = { main, monde, t: performance.now() };
   });
 
   const [mode, setMode] = useState<Mode>("suivi");
@@ -47,7 +47,7 @@ export default function App() {
       // La cible : la main en mode suivi ; le repos ; sinon on reste où l'on est.
       const cible =
         modeRef.current === "repos" ? ANGLES_REPOS
-        : modeRef.current === "suivi" && mainVue ? mainVersAngles(m!.main)
+        : modeRef.current === "suivi" && mainVue ? mainVersAngles(m!.main, m!.monde)
         : actuels;
       actuels = lisser(actuels, cible, dt);
 
@@ -89,7 +89,7 @@ export default function App() {
     <main className="page">
       <header className="entete">
         <p className="bonjour">Projet d'ingénierie</p>
-        <h1>Le bras robot qui suit ta main</h1>
+        <h1>Le bras et la main robotiques qui suivent ta main</h1>
         <p className={`direct ${mode !== "suivi" || !affichage.mainVue ? "attente" : ""}`} role="status">{phrase}</p>
       </header>
 
@@ -112,14 +112,25 @@ export default function App() {
             <li><strong>Gauche / droite</strong> : la base tourne</li>
             <li><strong>Haut / bas</strong> : l'épaule monte ou descend</li>
             <li><strong>Main près de la caméra</strong> : le bras se tend</li>
-            <li><strong>Pincer pouce et index</strong> : la pince se ferme</li>
+            <li><strong>Plier un doigt</strong> : la main robot plie le même</li>
+            <li><strong>Tourner la main</strong> (comme une poignée) : le poignet tourne</li>
           </ul>
         </section>
 
         <section className="carte" aria-label="Le bras">
-          <canvas ref={toile} className="bras" width="460" height="300" role="img" aria-label="Dessin du bras robot" />
+          <canvas ref={toile} className="bras" width="460" height="300" role="img" aria-label="Dessin du bras et de la main robotiques" />
+          <h2 className="sous-titre">Le bras</h2>
           <dl className="angles">
-            {ARTICULATIONS.map((a) => (
+            {(["base", "epaule", "coude", "poignet"] as Articulation[]).map((a) => (
+              <div key={a}>
+                <dt>{NOMS[a]}</dt>
+                <dd>{Math.round(affichage.angles[a])}°</dd>
+              </div>
+            ))}
+          </dl>
+          <h2 className="sous-titre">Les doigts</h2>
+          <dl className="angles angles--doigts">
+            {DOIGTS.map((a) => (
               <div key={a}>
                 <dt>{NOMS[a]}</dt>
                 <dd>{Math.round(affichage.angles[a])}°</dd>

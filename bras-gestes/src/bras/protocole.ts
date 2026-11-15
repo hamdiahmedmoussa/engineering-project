@@ -1,16 +1,16 @@
 /*
   LE MESSAGE ENVOYÉ AU BRAS PAR LE CÂBLE USB
   Une ligne de texte par commande, facile à lire dans le Moniteur série :
-    "A 90 45 120 60\n"  → angles de la base, de l'épaule, du coude et de la pince (degrés entiers)
-    "R\n"               → retour en position de repos
+    "A 90 90 90 90 20 20 20 20 20\n" → 9 angles entiers, dans l'ordre :
+       base, épaule, coude, poignet, pouce, index, majeur, annulaire, auriculaire
+    "R\n" → retour en position de repos
   L'ESP32 vérifie chaque ligne et refuse tout ce qui est hors limites (voir limites.h).
 */
 import { borner } from "./angles";
-import type { Angles } from "./reglages";
+import { ARTICULATIONS, type Angles } from "./reglages";
 
 export function ligneAngles(a: Angles): string {
-  const v = (x: keyof Angles) => Math.round(borner(x, a[x]));
-  return `A ${v("base")} ${v("epaule")} ${v("coude")} ${v("pince")}\n`;
+  return "A " + ARTICULATIONS.map((x) => Math.round(borner(x, a[x]))).join(" ") + "\n";
 }
 
 export const LIGNE_REPOS = "R\n";
@@ -18,5 +18,5 @@ export const LIGNE_REPOS = "R\n";
 /** Faut-il renvoyer ? Seulement si un angle a bougé d'au moins 1° : on ne sature pas le câble. */
 export function aChange(avant: Angles | null, apres: Angles): boolean {
   if (!avant) return true;
-  return (Object.keys(apres) as (keyof Angles)[]).some((k) => Math.abs(Math.round(apres[k]) - Math.round(avant[k])) >= 1);
+  return ARTICULATIONS.some((k) => Math.abs(Math.round(apres[k]) - Math.round(avant[k])) >= 1);
 }

@@ -165,10 +165,25 @@ h1 {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+.angles--doigts {
+  grid-template-columns: repeat(5, 1fr);
+}
+.angles--doigts dd {
+  font-size: 1.1rem;
+}
+.sous-titre {
+  margin: 12px 0 0;
+  color: var(--doux);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
 @media (max-width: 480px) {
   .angles,
   .aide {
     grid-template-columns: 1fr 1fr;
+  }
+  .angles--doigts {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 

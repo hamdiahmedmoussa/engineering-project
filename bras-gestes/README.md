@@ -1,56 +1,74 @@
-# Bras robot piloté par la main
+# Bras et main robotiques pilotés par la main
 
-La webcam filme ta main, **MediaPipe** repère ses 21 points (comme pour le drone), et un bras robot
-à 4 servomoteurs suit tes mouvements :
+La webcam filme ta main, **MediaPipe** repère ses 21 points en 3D (comme pour le drone), et un bras
+robotique **avec une main à 5 doigts** copie tes gestes :
 
-| Ta main | Le bras |
+| Ta main | Le robot |
 |---|---|
 | Gauche / droite | La **base** tourne |
 | Haut / bas | L'**épaule** monte ou descend |
 | Proche / loin de la caméra | Le **coude** se tend ou se plie |
-| Pouce et index qui se pincent | La **pince** se ferme |
+| Tourner la main (comme une poignée de porte) | Le **poignet** tourne |
+| Plier un doigt | Le **même doigt** du robot se plie |
 
-La page web (Chrome ou Edge sur ordinateur) envoie les angles à un **ESP32 par le câble USB** (Web Serial) :
-pas de Wi-Fi à régler, presque aucun délai. Sans bras branché, un **dessin du bras** permet de tout tester.
+**9 servomoteurs** en tout. La page web (Chrome ou Edge sur ordinateur) envoie les 9 angles à un
+**ESP32 par le câble USB** (Web Serial), qui les transmet à une carte **PCA9685**.
+Sans robot branché, un **dessin du bras et de la main** permet de tout tester.
 
-## 1. Le matériel
+## 1. Comment un doigt robotique se plie
+
+Chaque doigt est fait de 3 phalanges articulées. Un **fil** (fil de pêche tressé) passe à l'intérieur,
+comme un **tendon**, et s'enroule sur le palonnier d'un servo placé dans l'avant-bras : le servo tourne,
+le fil tire, le doigt se plie. Un **élastique** sur le dessus du doigt le ramène tendu.
+Pour le doigt, on mesure sur ta main la **somme des angles de ses articulations** :
+environ 20° tendu (l'éventail naturel des doigts), environ 200° en poing fermé.
+
+## 2. Le matériel
 
 | Pièce | Rôle | Prix indicatif |
 |---|---|---|
-| Bras en kit à **4 servos** (type « MeArm », acrylique ou bois) | La mécanique | 15 – 30 $ |
-| 4 servos **MG90S** (engrenages métal) ou SG90 (souvent fournis avec le kit) | Les articulations | 8 – 15 $ |
-| ESP32 DevKit (celui des autres projets) | Reçoit les angles, commande les servos | 5 – 10 $ |
-| **Alimentation 5 V, 3 A** (bloc secteur avec fiche jack, ou chargeur USB puissant) | Alimente les servos | 5 – 8 $ |
-| Condensateur **1000 µF 10 V** | Absorbe les pics de courant au démarrage des servos | < 1 $ |
-| Plaque d'essai, fils, bornier | Montage | 3 $ |
+| **Main robotique à 5 doigts** : kit en métal ou en plastique avec 5 servos, ou main imprimée en 3D (modèle libre **InMoov**) | Les doigts et leurs tendons | 25 – 60 $ |
+| 5 servos **MG90S** (si non fournis) | Un par doigt | 10 – 15 $ |
+| Bras **assez solide pour porter la main** : servos **MG996R** (couple élevé) pour base, épaule et coude | Le bras | 20 – 40 $ |
+| 1 servo MG90S ou MG996R pour le poignet | La rotation | 3 – 6 $ |
+| Carte **PCA9685** (16 sorties servos, I2C) | Génère les signaux des 9 servos | 3 – 5 $ |
+| ESP32 DevKit (celui des autres projets) | Reçoit les angles par USB, commande la PCA9685 | 5 – 10 $ |
+| **Alimentation 6 V, 10 A** (ou 5 V, 10 A) | Alimente les servos | 10 – 20 $ |
+| Condensateur **1000 µF 10 V** | Absorbe les pics de courant | < 1 $ |
 
-## 2. ⚠️ Les règles qui évitent de tout griller
+**Conseil : commence par la main seule**, fixée sur un support (l'avant-bras posé sur la table).
+Les doigts sont la partie la plus délicate (tension des fils, calibration). Le petit bras « MeArm »
+en servos SG90 est **trop faible pour porter une main** : prévois des MG996R pour le bras.
 
-- **Les servos ne s'alimentent JAMAIS par la broche 5 V de l'ESP32.** Quatre servos peuvent demander
-  plus de 2 A d'un coup : l'ESP32 redémarrerait sans arrêt (ou son régulateur chaufferait).
-  Utilise l'**alimentation 5 V séparée**.
-- **Masse commune obligatoire** : relie le GND de l'alimentation au GND de l'ESP32. Sans ça,
-  les servos reçoivent des ordres incompréhensibles et tremblent.
-- **Calibre AVANT de visser les bras sur les servos** (étape C). Un servo qui force contre une butée
-  chauffe et casse ses engrenages.
-- Garde les doigts loin de la pince pendant les essais.
+## 3. ⚠️ Les règles qui évitent de tout griller
 
-## 3. Le schéma
+- **Les servos ne s'alimentent JAMAIS par l'ESP32.** 9 servos peuvent tirer plus de 5 A d'un coup.
+  L'alimentation 6 V se branche sur le **bornier V+ / GND de la PCA9685**.
+- **Masse commune obligatoire** entre l'alimentation, la PCA9685 et l'ESP32.
+- **Calibre AVANT d'attacher les fils des doigts et les bras** (étape C). Un servo qui tire un doigt
+  déjà fermé force, chauffe, et peut casser le fil ou ses engrenages.
+- Garde les doigts loin de la main robot pendant les essais.
+
+## 4. Le schéma
 
 ```
-  Alimentation 5 V (+) ──┬── fil rouge des 4 servos
-                         ├── (+) condensateur 1000 µF
-  Alimentation 5 V (−) ──┼── fil marron/noir des 4 servos
-                         ├── (−) condensateur
-                         └── GND de l'ESP32          (masse commune)
+  ESP32           PCA9685
+  3,3 V   ──────  VCC        (la logique de la carte)
+  GND     ──────  GND
+  GPIO21  ──────  SDA
+  GPIO22  ──────  SCL
 
-  Fils de signal (orange ou jaune) :
-    base → GPIO13    épaule → GPIO12    coude → GPIO14    pince → GPIO27
+  Alimentation 6 V (+) ── V+ (bornier de la PCA9685) ── (+) condensateur 1000 µF
+  Alimentation 6 V (−) ── GND (bornier)               ── (−) condensateur
+
+  Sorties de la PCA9685 (une prise 3 broches par servo) :
+    0 base   1 épaule   2 coude   3 poignet
+    4 pouce  5 index    6 majeur  7 annulaire  8 auriculaire
 
   ESP32 ── câble USB ── ordinateur (Chrome ou Edge)
 ```
 
-## 4. Les étapes
+## 5. Les étapes
 
 ### Étape A : la page seule, sans rien acheter
 
@@ -58,52 +76,56 @@ pas de Wi-Fi à régler, presque aucun délai. Sans bras branché, un **dessin d
 cd bras-gestes
 npm install      # copie aussi le moteur MediaPipe dans public/mediapipe
 npm run dev      # http://localhost:5173 dans Chrome ou Edge
-npm test         # 11 tests : angles, mouvement doux, message, limites identiques
+npm test         # 11 tests : doigts, poignet, bras, mouvement doux, message, limites identiques
 ```
 
-Clique **« Activer la caméra »** et bouge la main : le dessin du bras la suit.
+Active la caméra et bouge la main : le dessin suit, doigt par doigt.
 
-### Étape B : l'ESP32 et les servos (sans le bras monté)
+### Étape B : l'ESP32, la PCA9685 et un servo
 
-1. Arduino IDE → *Gérer les bibliothèques* : installe **ESP32Servo**.
+1. Arduino IDE → *Gérer les bibliothèques* : installe **Adafruit PWM Servo Driver Library**.
 2. Ouvre `firmware/bras-gestes/bras-gestes.ino` et téléverse.
-3. Branche les servos **sans leurs bras en plastique**, comme le schéma.
-4. Ouvre le *Moniteur série* (115200 bauds, fin de ligne « Nouvelle ligne ») et tape :
-   `A 90 90 90 60` puis `A 120 90 90 60` : le servo de la base doit tourner doucement.
-   Essaie aussi `A 200 90 90 60` : l'ESP32 doit répondre **« Commande refusée »**.
+3. Branche **un seul servo** sur la sortie 5 (index), **sans rien attaché dessus**.
+4. *Moniteur série* (115200 bauds, fin de ligne « Nouvelle ligne ») :
+   `A 90 90 90 90 20 20 20 20 20`, puis `A 90 90 90 90 20 120 20 20 20` : le servo de l'index tourne doucement.
+   Essaie `A 90 90 90 90 20 200 20 20 20` : l'ESP32 doit répondre **« Commande refusée »**.
 
-### Étape C : calibrer
+### Étape C : calibrer chaque doigt
 
-1. Avec la commande `R` (repos), tous les servos vont à 90° (et la pince à 60°).
-2. **Visse maintenant les bras du kit** dans cette position, comme le montre la notice du kit
-   (bras « au milieu »).
-3. Pour chaque articulation, essaie des angles de plus en plus grands avec `A …` dans le Moniteur série.
-   Note l'angle **juste avant** que la mécanique touche une butée : c'est ta limite.
-4. Écris ces limites à **deux endroits** : `firmware/bras-gestes/limites.h` **et** `src/bras/reglages.ts`.
-   Le test `npm test` vérifie que les deux sont identiques.
-5. Téléverse à nouveau.
+1. Envoie `R` : tous les doigts vont en position « ouvert » (20°).
+2. **Attache le fil du doigt** sur le palonnier dans cette position, fil juste tendu, doigt droit.
+3. Augmente l'angle de ce doigt petit à petit (`A … 60 …`, `A … 100 …`) jusqu'à ce que le doigt soit
+   **fermé sans forcer**. Note cet angle : c'est son **max**.
+4. Si le doigt se plie quand l'angle **diminue**, ton servo est monté à l'envers : garde les angles,
+   et mets `inverse: true` pour ce doigt dans `src/bras/reglages.ts`.
+5. Fais pareil pour le poignet, puis pour le bras (base, épaule, coude), avant de visser leurs palonniers.
+6. Écris les limites à **deux endroits** : `firmware/bras-gestes/limites.h` **et** `src/bras/reglages.ts`.
+   Le test `npm test` vérifie qu'ils sont identiques. Téléverse à nouveau.
 
-### Étape D : piloter avec la main
+### Étape D : piloter avec ta main
 
-1. **Ferme le Moniteur série** de l'Arduino IDE (un seul programme peut utiliser le câble USB à la fois).
-2. Sur la page, clique **« Connecter le bras (USB) »** et choisis la carte dans la liste.
-3. Active la caméra : le vrai bras suit ta main.
+1. **Ferme le Moniteur série** (un seul programme peut utiliser le câble USB à la fois).
+2. Sur la page, **« Connecter le bras (USB) »**, choisis la carte, puis active la caméra.
+3. Montre ta main **paume face à la caméra**, à environ 50 cm, bien éclairée.
 
-**Sécurité :** <kbd>Espace</kbd> met en pause (le bras s'immobilise). Si ta main sort de l'image,
-le bras se fige là où il est. S'il ne reçoit plus rien pendant 3 s, il reste immobile.
+**Sécurité :** <kbd>Espace</kbd> met en pause. Si ta main sort de l'image, tout se fige.
+Sans commande depuis 3 s, le robot reste immobile.
 
-## 5. Comment c'est organisé
+**Si un doigt réagit mal**, ajuste les plages dans `PLAGES` (`src/bras/angles.ts`) : `pliageDoigt`
+(tendu → fermé, en degrés), `pliagePouce`, `poignet`.
+
+## 6. Comment c'est organisé
 
 | Fichier | Rôle |
 |---|---|
-| `src/bras/angles.ts` | Main → 4 angles ; mouvement doux (lissage + vitesse maximale de 120 °/s) |
-| `src/bras/reglages.ts` | Limites de chaque servo et position de repos |
-| `src/bras/protocole.ts` | Le message envoyé par USB : `A base épaule coude pince` |
+| `src/bras/angles.ts` | Main → 9 angles : position (bras), pliage de chaque doigt et rotation du poignet en 3D ; mouvement doux |
+| `src/bras/reglages.ts` | Limites des 9 servos, position de repos, servos inversés |
+| `src/bras/protocole.ts` | Le message USB : `A base épaule coude poignet pouce index majeur annulaire auriculaire` |
 | `src/bras/useLienUsb.ts` | La connexion USB (Web Serial) |
-| `src/bras/dessinerBras.ts` | Le dessin du bras à l'écran |
-| `src/useCamera.ts` | Webcam + MediaPipe |
+| `src/bras/dessinerBras.ts` | Le dessin : bras de côté, main de face |
+| `src/useCamera.ts` | Webcam + MediaPipe (points dans l'image et en 3D) |
 | `firmware/bras-gestes/protocole.h` | L'ESP32 vérifie chaque ligne et **refuse** tout angle hors limites |
-| `firmware/bras-gestes/bras-gestes.ino` | Déplace les servos doucement (3° toutes les 15 ms au plus) |
+| `firmware/bras-gestes/bras-gestes.ino` | Déplace les 9 servos doucement via la PCA9685 |
 
 Tests de l'ESP32, sur ordinateur :
 
@@ -111,8 +133,9 @@ Tests de l'ESP32, sur ordinateur :
 g++ -std=c++17 -o test firmware/tests/test_protocole.cpp && ./test
 ```
 
-## 6. Pour aller plus loin
+## 7. Pour aller plus loin
 
-- **Mémoriser une trajectoire** : enregistrer les angles pendant que tu bouges, puis la rejouer seule.
-- **Un vrai geste pour attraper** : utiliser la reconnaissance du drone (poing fermé = saisir).
-- **Sans fil** : remplacer l'USB par le Wi-Fi (WebSocket) pour piloter depuis un téléphone.
+- **Saisir un objet** : détecter le poing fermé et serrer jusqu'à ce que le courant du servo monte
+  (capteur INA219, comme dans le suivi solaire) pour ne pas écraser l'objet.
+- **Rejouer un geste** : enregistrer les 9 angles pendant que tu bouges, puis les rejouer.
+- **Langue des signes** : faire « dire » des lettres à la main robot.
