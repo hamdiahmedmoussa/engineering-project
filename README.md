@@ -4,6 +4,7 @@ Mes projets d'ingénierie (Électricité & Énergie, électronique, vision par o
 
 | Projet | Description |
 |---|---|
+| [`detecteur-arnaques/`](detecteur-arnaques/) | Détecteur d'arnaques par SMS et WhatsApp : règles qui expliquent + classifieur bayésien écrit à la main, page « Arnaque ou pas ? ». Python sans bibliothèque. |
 | [`drone-gestes/`](drone-gestes/) | Drone piloté par les gestes de la main : webcam + MediaPipe (21 points de la main) → geste → drone. Pour l'instant un simulateur 3D ; ensuite un vrai drone DJI Tello. |
 | [`bras-gestes/`](bras-gestes/) | Bras et main robotiques à 5 doigts (9 servos) qui copient la main devant la webcam (MediaPipe 3D), commandés par USB depuis Chrome. |
 | [`compteur-energie/`](compteur-energie/) | Compteur d'énergie connecté : ESP32 + pince ampèremétrique, consommation en W, kWh et FDJ sur le téléphone. |
