@@ -89,7 +89,35 @@ raisonnable, 3 disjoncteurs ouverts d'un coup. C'est la **défense en profondeur
 | Au plus 6 écritures par minute | Un script qui mitraille les commandes |
 | Trames mal formées refusées | Les messages abîmés ou fabriqués pour faire planter l'automate |
 
-## 5. Tests
+## 5. La version ESP32 : un vrai automate
+
+Un ESP32 remplace `automate.py` : c'est un **vrai équipement Modbus TCP** (port 502), avec 3 **LED**
+comme disjoncteurs (allumée = départ alimenté). Il crée **son propre réseau Wi-Fi « Labo-OT »**,
+pour que cet automate volontairement vulnérable ne soit **jamais** sur le Wi-Fi de la maison.
+
+**Matériel** : un ESP32, 3 LED, 3 résistances de 220 Ω (environ 7 dollars). Uniquement de la basse tension.
+
+```
+  GPIO25 ──[220 Ω]──▶|── GND    Hôpital
+  GPIO26 ──[220 Ω]──▶|── GND    Quartier résidentiel
+  GPIO27 ──[220 Ω]──▶|── GND    Zone portuaire          (patte longue de la LED côté résistance)
+```
+
+1. Dans `firmware/automate-esp32/`, copie `config.exemple.h` en `config.h` et **change le mot de passe**
+   (sinon le programme refuse de compiler). Téléverse `automate-esp32.ino`.
+2. Connecte ton PC au Wi-Fi **Labo-OT**. L'automate est à l'adresse **192.168.4.1**.
+3. Sur le PC :
+
+```bash
+python pare_feu.py --automate 192.168.4.1:502
+python supervision.py
+python demonstration_attaque.py --labo --hote 192.168.4.1 --port 502   # attaque directe : les LED s'éteignent
+python demonstration_attaque.py --labo --port 5020                     # via le pare-feu : bloquée
+```
+
+Le *Moniteur série* (115200 bauds) affiche chaque disjoncteur ouvert et chaque déclenchement de la protection.
+
+## 6. Tests
 
 ```bash
 python -m unittest discover -s tests -t .
@@ -100,10 +128,16 @@ chaque règle du pare-feu, et un **scénario complet** qui lance l'automate et l
 puis joue l'attaque directe (réussie), l'attaque via le pare-feu (bloquée), l'usurpation (bloquée)
 et la supervision (autorisée et journalisée).
 
+Tests de l'automate ESP32 (sur ordinateur) :
+
+```bash
+g++ -std=c++17 -o test firmware/tests/test_poste.cpp && ./test
+```
+
 **Sous Windows**, si la supervision n'arrive pas à se connecter depuis 127.0.0.2, lance-la avec un autre
 ordinateur du réseau local, et mets son adresse dans `ecrivains` (`regles.py`).
 
-## 6. Organisation du code
+## 7. Organisation du code
 
 | Fichier | Rôle |
 |---|---|
@@ -114,11 +148,13 @@ ordinateur du réseau local, et mets son adresse dans `ecrivains` (`regles.py`).
 | `client.py` | Un client Modbus minimal |
 | `supervision.py` + `supervision.html` | La salle de contrôle |
 | `demonstration_attaque.py` | L'attaque, limitée à ton laboratoire |
+| `firmware/automate-esp32/poste.h` | L'automate ESP32 : réponses Modbus (même mémoire que `automate.py`), testé sur ordinateur |
+| `firmware/automate-esp32/automate-esp32.ino` | Réseau « Labo-OT », serveur Modbus (4 clients), LED, protection |
 
-## 7. Pour aller plus loin
+## 8. Pour aller plus loin
 
-- **La version matérielle** : un ESP32 joue l'automate (Modbus TCP), avec 3 LED ou 3 petits relais
-  en basse tension pour les disjoncteurs ; le pare-feu tourne sur un Raspberry Pi entre deux réseaux.
+- **Le pare-feu sur un Raspberry Pi à deux interfaces** (Wi-Fi d'un côté, Ethernet de l'autre) : l'automate
+  n'est alors physiquement joignable QUE par le pare-feu, comme dans un vrai poste.
 - **Détecter sans bloquer** : un système de détection d'intrusion qui apprend le trafic « normal »
   (qui écrit quoi, à quelle fréquence) et alerte sur ce qui sort de l'ordinaire.
 - **Les normes** : IEC 62443 (sécurité des systèmes industriels) et le modèle de Purdue (zones et conduits).

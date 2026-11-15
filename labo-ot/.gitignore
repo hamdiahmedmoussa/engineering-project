@@ -1,2 +1,3 @@
 __pycache__/
 journal-pare-feu.jsonl
+firmware/automate-esp32/config.h

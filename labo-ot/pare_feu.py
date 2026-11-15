@@ -11,10 +11,12 @@ Tout est écrit dans journal-pare-feu.jsonl (une ligne JSON par événement), lu
 Dans un vrai poste, l'automate n'est joignable QUE par le pare-feu (câble ou réseau séparé).
 Ici, tout est sur le même PC : la démonstration montre l'attaque directe ET l'attaque via le pare-feu.
 
-Lancer :  python pare_feu.py
+Lancer :  python pare_feu.py                               (automate simulé, sur ce PC)
+          python pare_feu.py --automate 192.168.4.1:502      (automate ESP32, réseau « Labo-OT »)
 """
 from __future__ import annotations
 
+import argparse
 import asyncio
 import json
 import struct
@@ -90,15 +92,18 @@ async def servir(gardien: Gardien, port: int = PORT, automate: tuple[str, int] =
     return await asyncio.start_server(client, "127.0.0.1", port)
 
 
-async def principal() -> None:
-    serveur = await servir(Gardien())
-    print(f"[pare-feu] En garde sur le port {PORT}, devant l'automate (port {AUTOMATE[1]}). Journal : {JOURNAL.name}")
+async def principal(automate: tuple[str, int]) -> None:
+    serveur = await servir(Gardien(), automate=automate)
+    print(f"[pare-feu] En garde sur le port {PORT}, devant l'automate {automate[0]}:{automate[1]}. Journal : {JOURNAL.name}")
     async with serveur:
         await serveur.serve_forever()
 
 
 if __name__ == "__main__":
+    p = argparse.ArgumentParser()
+    p.add_argument("--automate", default=f"{AUTOMATE[0]}:{AUTOMATE[1]}", help="adresse:port de l'automate à protéger")
+    hote, _, port = p.parse_args().automate.rpartition(":")
     try:
-        asyncio.run(principal())
+        asyncio.run(principal((hote, int(port))))
     except KeyboardInterrupt:
         pass
