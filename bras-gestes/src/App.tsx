@@ -9,7 +9,7 @@
 */
 import { useEffect, useRef, useState } from "react";
 import { limiterVitesse, mainVersAngles } from "./bras/angles";
-import { dessinerBras } from "./bras/dessinerBras";
+import { Bras3D } from "./bras/Bras3D";
 import { FiltreAngles } from "./bras/filtre";
 import { aChange, ligneAngles } from "./bras/protocole";
 import { ANGLES_REPOS, DOIGTS, NOMS, type Angles, type Articulation } from "./bras/reglages";
@@ -38,7 +38,10 @@ export default function App() {
   modeRef.current = mode;
   const [affichage, setAffichage] = useState<{ angles: Angles; mainVue: boolean; ips: number }>({ angles: ANGLES_REPOS, mainVue: false, ips: 0 });
   const imagesParSeconde = camera.imagesParSeconde;
-  const toile = useRef<HTMLCanvasElement>(null);
+  /** Les angles actuels, lus ~60 fois par seconde par la scène 3D (sans redessiner React). */
+  const anglesAffiches = useRef<Angles>(ANGLES_REPOS);
+  // Couleur du fond de la page (claire ou sombre) : la scène 3D s'y fond.
+  const [fond] = useState(() => getComputedStyle(document.documentElement).getPropertyValue("--fond").trim() || "#f6efe4");
   const envoyer = useRef(lien.envoyer);
   envoyer.current = lien.envoyer;
 
@@ -60,7 +63,7 @@ export default function App() {
         : actuels;
       actuels = limiterVitesse(actuels, cible, dt);
 
-      if (toile.current) dessinerBras(toile.current, actuels);
+      anglesAffiches.current = actuels;
       if (maintenant - tEnvoi > 20 && aChange(dernierEnvoi, actuels)) {
         tEnvoi = maintenant;
         dernierEnvoi = actuels;
@@ -130,7 +133,10 @@ export default function App() {
         </section>
 
         <section className="carte" aria-label="Le bras">
-          <canvas ref={toile} className="bras" width="460" height="300" role="img" aria-label="Dessin du bras et de la main robotiques" />
+          <div className="bras" role="img" aria-label="Le bras et la main robotiques en 3D, qui copient ta main">
+            <Bras3D angles={anglesAffiches} fond={fond} />
+          </div>
+          <p className="aide-3d">Fais glisser pour tourner autour du robot, molette pour zoomer.</p>
           <h2 className="sous-titre">Le bras</h2>
           <dl className="angles">
             {(["base", "epaule", "coude", "poignet"] as Articulation[]).map((a) => (

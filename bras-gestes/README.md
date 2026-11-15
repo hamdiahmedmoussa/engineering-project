@@ -13,7 +13,7 @@ robotique **avec une main à 5 doigts** copie tes gestes :
 
 **9 servomoteurs** en tout. La page web (Chrome ou Edge sur ordinateur) envoie les 9 angles à un
 **ESP32 par le câble USB** (Web Serial), qui les transmet à une carte **PCA9685**.
-Sans robot branché, un **dessin du bras et de la main** permet de tout tester.
+Sans robot branché, un **robot en 3D réaliste** (aluminium, servos, main à 5 doigts de 3 phalanges) copie déjà tes gestes : tu peux tourner autour à la souris.
 
 ## 1. Comment un doigt robotique se plie
 
@@ -128,7 +128,7 @@ Sans commande depuis 3 s, le robot reste immobile.
 | `src/bras/reglages.ts` | Limites des 9 servos, position de repos, servos inversés |
 | `src/bras/protocole.ts` | Le message USB : `A base épaule coude poignet pouce index majeur annulaire auriculaire` |
 | `src/bras/useLienUsb.ts` | La connexion USB (Web Serial) |
-| `src/bras/dessinerBras.ts` | Le dessin : bras de côté, main de face |
+| `src/bras/Bras3D.tsx` | Le robot en **3D réaliste** (Three.js) : socle tournant, aluminium, servos, main à 5 doigts de 3 phalanges ; on tourne autour à la souris |
 | `src/useCamera.ts` | Webcam + MediaPipe (points dans l'image et en 3D) |
 | `firmware/bras-gestes/protocole.h` | L'ESP32 vérifie chaque ligne et **refuse** tout angle hors limites |
 | `firmware/bras-gestes/bras-gestes.ino` | Déplace les 9 servos doucement via la PCA9685 |

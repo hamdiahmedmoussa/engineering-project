@@ -140,9 +140,24 @@ h1 {
 }
 
 .bras {
-  display: block;
-  width: 100%;
-  height: auto;
+  height: 420px;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: grab;
+}
+.bras:active {
+  cursor: grabbing;
+}
+.aide-3d {
+  margin: 6px 0 0;
+  color: var(--doux);
+  font-size: 0.8rem;
+  text-align: center;
+}
+@media (max-width: 480px) {
+  .bras {
+    height: 340px;
+  }
 }
 .angles {
   display: grid;
