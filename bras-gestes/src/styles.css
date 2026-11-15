@@ -1,0 +1,228 @@
+/*
+  Même famille que les tableaux de bord ESP32 : sable, terre cuite, coins arrondis, phrases simples.
+  Ordinateur : caméra et bras côte à côte. Téléphone : l'un sous l'autre.
+*/
+:root {
+  --fond: #f6efe4;
+  --carte: #fffaf3;
+  --texte: #3a2e26;
+  --doux: #8a7769;
+  --trait: #eadfce;
+  --accent: #d9693a;
+  --accent-pale: #f6dccb;
+  --soleil: #e6a23c;
+  --mer: #2f7d78;
+  --ombre: 0 1px 2px rgba(90, 60, 30, 0.06), 0 8px 24px rgba(90, 60, 30, 0.07);
+  --arrondi: 22px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fond: #1f1a17; --carte: #2a2420; --texte: #f1e7db; --doux: #b3a293; --trait: #3b332d;
+    --accent: #f08a5b; --accent-pale: #4a3022; --soleil: #f0b55a; --mer: #6cc3bb;
+    --ombre: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
+  line-height: 1.45;
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+
+.entete {
+  padding: 0 6px 16px;
+}
+.bonjour {
+  margin: 0;
+  color: var(--doux);
+}
+h1 {
+  margin: 2px 0 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+.direct {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 0;
+  color: var(--doux);
+}
+.direct::before {
+  content: "";
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--mer);
+}
+.direct.attente::before {
+  background: var(--soleil);
+}
+
+.grille {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 860px) {
+  .grille {
+    grid-template-columns: 1fr;
+  }
+}
+
+.carte {
+  padding: 16px;
+  border-radius: var(--arrondi);
+  background: var(--carte);
+  box-shadow: var(--ombre);
+}
+.carte h2 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+.usb {
+  grid-column: 1 / -1;
+}
+
+/* Caméra en miroir : on lève la main droite, elle apparaît à droite. */
+.camera__cadre {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--trait);
+}
+.camera video,
+.camera canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+.camera__voile {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  text-align: center;
+}
+.aide {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 16px;
+  margin: 12px 4px 0;
+  padding: 0;
+  list-style: none;
+  color: var(--doux);
+  font-size: 0.88rem;
+}
+.aide strong {
+  color: var(--texte);
+}
+
+.bras {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.angles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 8px 0 0;
+}
+.angles div {
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: var(--fond);
+}
+.angles dt {
+  color: var(--doux);
+  font-size: 0.78rem;
+}
+.angles dd {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 480px) {
+  .angles,
+  .aide {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.boutons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+.bouton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--mer);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.bouton--doux {
+  background: var(--accent-pale);
+  color: var(--accent);
+}
+.bouton:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.bouton:focus-visible {
+  outline: 3px solid var(--texte);
+  outline-offset: 2px;
+}
+kbd {
+  padding: 1px 6px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  font: 0.75em ui-monospace, monospace;
+  opacity: 0.8;
+}
+
+.note {
+  margin: 6px 0 0;
+  color: var(--doux);
+  font-size: 0.85rem;
+}
+.erreur {
+  margin: 6px 0 0;
+  color: var(--accent);
+  font-size: 0.9rem;
+}
+.ok {
+  color: var(--mer);
+  font-weight: 600;
+}
