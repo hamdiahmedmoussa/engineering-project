@@ -1,13 +1,16 @@
 /*
   L'ÉCRAN PRINCIPAL
-  Boucle d'animation (environ 60 fois par seconde) :
-    1. la cible : les angles calculés depuis la main, ou la position figée (pause, main perdue, repos) ;
-    2. les angles actuels avancent doucement vers la cible (lisser) ;
-    3. on dessine le bras, et on envoie les angles à l'ESP32 environ 30 fois par seconde.
+  À chaque détection de la main (environ 30 fois par seconde) :
+    les 9 angles sont calculés, puis nettoyés par le filtre One Euro (tremblements, erreurs de détection).
+  À chaque image d'animation (environ 60 fois par seconde) :
+    1. la cible : les angles filtrés, ou la position figée (pause, main perdue, repos) ;
+    2. les angles actuels rejoignent la cible sans dépasser la vitesse maximale des servos ;
+    3. on dessine le bras, et on envoie les angles à l'ESP32 environ 50 fois par seconde.
 */
 import { useEffect, useRef, useState } from "react";
-import { lisser, mainVersAngles, type Point } from "./bras/angles";
+import { limiterVitesse, mainVersAngles } from "./bras/angles";
 import { dessinerBras } from "./bras/dessinerBras";
+import { FiltreAngles } from "./bras/filtre";
 import { aChange, ligneAngles } from "./bras/protocole";
 import { ANGLES_REPOS, DOIGTS, NOMS, type Angles, type Articulation } from "./bras/reglages";
 import { useLienUsb } from "./bras/useLienUsb";
@@ -20,15 +23,21 @@ type Mode = "suivi" | "pause" | "repos";
 
 export default function App() {
   const lien = useLienUsb();
-  const derniereMain = useRef<{ main: Point[]; monde: Point[]; t: number } | null>(null);
+  const derniereMain = useRef<{ angles: Angles; t: number } | null>(null);
+  const filtre = useRef(new FiltreAngles());
   const camera = useCamera((main, monde) => {
-    if (main && monde) derniereMain.current = { main, monde, t: performance.now() };
+    const t = performance.now();
+    if (!main || !monde) return;
+    // La main revient après une absence : on repart de zéro (sinon le filtre « glisserait » depuis l'ancienne position).
+    if (!derniereMain.current || t - derniereMain.current.t > DELAI_MAIN_PERDUE_MS) filtre.current.reinitialiser();
+    derniereMain.current = { angles: filtre.current.filtrer(mainVersAngles(main, monde), t / 1000), t };
   });
 
   const [mode, setMode] = useState<Mode>("suivi");
   const modeRef = useRef<Mode>("suivi");
   modeRef.current = mode;
-  const [affichage, setAffichage] = useState<{ angles: Angles; mainVue: boolean }>({ angles: ANGLES_REPOS, mainVue: false });
+  const [affichage, setAffichage] = useState<{ angles: Angles; mainVue: boolean; ips: number }>({ angles: ANGLES_REPOS, mainVue: false, ips: 0 });
+  const imagesParSeconde = camera.imagesParSeconde;
   const toile = useRef<HTMLCanvasElement>(null);
   const envoyer = useRef(lien.envoyer);
   envoyer.current = lien.envoyer;
@@ -47,25 +56,25 @@ export default function App() {
       // La cible : la main en mode suivi ; le repos ; sinon on reste où l'on est.
       const cible =
         modeRef.current === "repos" ? ANGLES_REPOS
-        : modeRef.current === "suivi" && mainVue ? mainVersAngles(m!.main, m!.monde)
+        : modeRef.current === "suivi" && mainVue ? m!.angles
         : actuels;
-      actuels = lisser(actuels, cible, dt);
+      actuels = limiterVitesse(actuels, cible, dt);
 
       if (toile.current) dessinerBras(toile.current, actuels);
-      if (maintenant - tEnvoi > 33 && aChange(dernierEnvoi, actuels)) {
+      if (maintenant - tEnvoi > 20 && aChange(dernierEnvoi, actuels)) {
         tEnvoi = maintenant;
         dernierEnvoi = actuels;
         void envoyer.current(ligneAngles(actuels));
       }
-      if (maintenant - tAffichage > 100) {
+      if (maintenant - tAffichage > 50) {
         tAffichage = maintenant;
-        setAffichage({ angles: actuels, mainVue });
+        setAffichage({ angles: actuels, mainVue, ips: imagesParSeconde.current });
       }
       image = requestAnimationFrame(boucle);
     };
     image = requestAnimationFrame(boucle);
     return () => cancelAnimationFrame(image);
-  }, []);
+  }, [imagesParSeconde]);
 
   // Espace : pause / reprise (geste de sécurité au clavier).
   useEffect(() => {
@@ -82,7 +91,10 @@ export default function App() {
     mode === "pause" ? "En pause : le bras reste immobile. Espace pour reprendre."
     : mode === "repos" ? "Retour en position de repos."
     : camera.statut !== "active" ? "Active la caméra pour piloter le bras avec ta main."
-    : affichage.mainVue ? "Le bras suit ta main."
+    : affichage.mainVue
+      ? affichage.ips && affichage.ips < 15
+        ? `Le bras suit ta main, mais le suivi est lent (${affichage.ips} images/s) : ferme les autres programmes, ajoute de la lumière.`
+        : `Le bras suit ta main (${affichage.ips} images/s).`
     : "Main hors de l'image : le bras s'est figé là où il était.";
 
   return (

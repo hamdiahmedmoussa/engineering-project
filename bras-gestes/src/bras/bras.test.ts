@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { convertir, lisser, mainVersAngles, pliage, rotationPoignet, type Point } from "./angles";
+import { convertir, limiterVitesse, mainVersAngles, pliage, rotationPoignet, type Point } from "./angles";
 import { aChange, ligneAngles } from "./protocole";
 import { ANGLES_REPOS, DOIGTS, LIMITES, type Doigt } from "./reglages";
 
@@ -100,12 +100,12 @@ describe("position du bras", () => {
   });
 });
 
-describe("mouvement doux", () => {
+describe("vitesse limitée", () => {
   it("ne dépasse jamais la vitesse maximale, et atteint la cible sans sortir des limites", () => {
-    const apres = lisser(ANGLES_REPOS, { ...ANGLES_REPOS, base: 170 }, 0.1); // 0,1 s à 150 °/s → 15° au plus
-    expect(apres.base - ANGLES_REPOS.base).toBeLessThanOrEqual(15.0001);
+    const apres = limiterVitesse(ANGLES_REPOS, { ...ANGLES_REPOS, base: 170 }, 0.05); // 0,05 s à 300 °/s → 15° au plus
+    expect(apres.base - ANGLES_REPOS.base).toBeCloseTo(15, 5);
     let a = ANGLES_REPOS;
-    for (let i = 0; i < 300; i++) a = lisser(a, { ...ANGLES_REPOS, index: 999 }, 1 / 30);
+    for (let i = 0; i < 300; i++) a = limiterVitesse(a, { ...ANGLES_REPOS, index: 999 }, 1 / 30);
     expect(a.index).toBe(LIMITES.index.max);
   });
 });

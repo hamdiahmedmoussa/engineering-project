@@ -1,7 +1,7 @@
 /*
   BRAS ET MAIN ROBOTIQUES PILOTÉS PAR LA MAIN · côté ESP32
   La page web (Chrome ou Edge) envoie par USB des lignes de 9 angles (voir protocole.h).
-  L'ESP32 vérifie chaque ligne, puis déplace les 9 servos DOUCEMENT (au plus 3° toutes les 15 ms).
+  L'ESP32 vérifie chaque ligne, puis déplace les 9 servos sans à-coups (au plus 3° toutes les 10 ms).
 
   Les servos sont branchés sur une carte PCA9685 (16 sorties), reliée à l'ESP32 par I2C :
   elle génère elle-même les signaux des servos, et reçoit leur alimentation sur son bornier « V+ ».
@@ -24,7 +24,7 @@ unsigned long dernierPas = 0, derniereCommande = 0;
 bool enAttente = false;
 
 const float PAS_MAX = 3.0;            // degrés par pas…
-const unsigned long PERIODE_MS = 15;  // … toutes les 15 ms (environ 200 °/s au maximum)
+const unsigned long PERIODE_MS = 10;  // … toutes les 10 ms : 300 °/s au maximum, comme la page (VITESSE_MAX)
 
 /** Un angle (0 à 180°) devient une impulsion de 500 à 2400 µs, envoyée sur la sortie du servo. */
 void ecrireAngle(int servo, float angle) {

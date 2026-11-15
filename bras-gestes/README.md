@@ -76,7 +76,7 @@ en servos SG90 est **trop faible pour porter une main** : prévois des MG996R po
 cd bras-gestes
 npm install      # copie aussi le moteur MediaPipe dans public/mediapipe
 npm run dev      # http://localhost:5173 dans Chrome ou Edge
-npm test         # 11 tests : doigts, poignet, bras, mouvement doux, message, limites identiques
+npm test         # 16 tests : doigts, poignet, bras, filtre, vitesse, message, limites identiques
 ```
 
 Active la caméra et bouge la main : le dessin suit, doigt par doigt.
@@ -111,6 +111,11 @@ Active la caméra et bouge la main : le dessin suit, doigt par doigt.
 **Sécurité :** <kbd>Espace</kbd> met en pause. Si ta main sort de l'image, tout se fige.
 Sans commande depuis 3 s, le robot reste immobile.
 
+**Fluidité** : le haut de la page affiche la vitesse du suivi (par exemple « 29 images/s »). En dessous de
+15 images/s, le mouvement sera saccadé : ferme les autres programmes, ajoute de la lumière, et utilise Chrome
+(il se sert de la carte graphique). Pour régler la sensation, voir `FILTRE` dans `src/bras/filtre.ts` :
+`coupureMin` plus bas = plus stable au repos, `beta` plus haut = moins de retard en mouvement.
+
 **Si un doigt réagit mal**, ajuste les plages dans `PLAGES` (`src/bras/angles.ts`) : `pliageDoigt`
 (tendu → fermé, en degrés), `pliagePouce`, `poignet`.
 
@@ -118,7 +123,8 @@ Sans commande depuis 3 s, le robot reste immobile.
 
 | Fichier | Rôle |
 |---|---|
-| `src/bras/angles.ts` | Main → 9 angles : position (bras), pliage de chaque doigt et rotation du poignet en 3D ; mouvement doux |
+| `src/bras/angles.ts` | Main → 9 angles : position (bras), pliage de chaque doigt et rotation du poignet en 3D ; vitesse limitée |
+| `src/bras/filtre.ts` | Filtre **One Euro** : stable au repos, sans retard en mouvement, et ignore les erreurs de détection d'une seule image |
 | `src/bras/reglages.ts` | Limites des 9 servos, position de repos, servos inversés |
 | `src/bras/protocole.ts` | Le message USB : `A base épaule coude poignet pouce index majeur annulaire auriculaire` |
 | `src/bras/useLienUsb.ts` | La connexion USB (Web Serial) |

@@ -105,15 +105,15 @@ export function mainVersAngles(main: Point[], monde: Point[]): Angles {
 }
 
 /**
- * Avance doucement des angles actuels vers les angles visés :
- * lissage (pour effacer les tremblements de la détection) + vitesse maximale (pour les servos).
+ * Avance les angles actuels vers les angles visés, SANS dépasser la vitesse maximale des servos.
+ * (Le tremblement de la détection est déjà effacé par le filtre One Euro, voir filtre.ts :
+ * ici, aucun lissage supplémentaire, donc aucun retard en plus.)
  */
-export function lisser(actuels: Angles, vises: Angles, dt: number): Angles {
+export function limiterVitesse(actuels: Angles, vises: Angles, dt: number): Angles {
   const suivant = { ...actuels };
-  const k = 1 - Math.exp(-8 * dt);
   const pasMax = VITESSE_MAX * dt;
   for (const a of Object.keys(vises) as Articulation[]) {
-    const ecart = (vises[a] - actuels[a]) * k;
+    const ecart = vises[a] - actuels[a];
     suivant[a] = borner(a, actuels[a] + Math.max(-pasMax, Math.min(pasMax, ecart)));
   }
   return suivant;

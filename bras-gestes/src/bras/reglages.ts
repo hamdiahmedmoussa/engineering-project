@@ -45,8 +45,11 @@ export const LIMITES: Record<Articulation, Limite> = {
   auriculaire: { min: 20, max: 160, repos: 20 },
 };
 
-/** Vitesse maximale d'un servo, en degrés par seconde : des mouvements doux, sans à-coups. */
-export const VITESSE_MAX = 150;
+/**
+ * Vitesse maximale demandée aux servos, en degrés par seconde. Un servo MG90S fait environ 600 °/s :
+ * on reste à la moitié, pour protéger la mécanique. L'ESP32 applique la même limite.
+ */
+export const VITESSE_MAX = 300;
 
 export type Angles = Record<Articulation, number>;
 

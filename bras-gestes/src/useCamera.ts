@@ -33,6 +33,8 @@ export function useCamera(surMain: (main: Point[] | null, monde: Point[] | null)
   const rappel = useRef(surMain);
   rappel.current = surMain;
   const arret = useRef<() => void>(() => {});
+  /** Nombre de détections par seconde : si c'est bas (moins de 15), le suivi sera saccadé. */
+  const imagesParSeconde = useRef(0);
 
   const demarrer = useCallback(async () => {
     setStatut("chargement");
@@ -53,6 +55,7 @@ export function useCamera(surMain: (main: Point[] | null, monde: Point[] | null)
       const outils = new DrawingUtils(ctx);
       let derniereImage = -1;
       let image = 0;
+      let compte = 0, debutCompte = performance.now();
 
       const boucle = () => {
         if (v.currentTime !== derniereImage) {
@@ -65,6 +68,12 @@ export function useCamera(surMain: (main: Point[] | null, monde: Point[] | null)
             outils.drawLandmarks(main, { color: "#fffaf3", radius: 3 });
           }
           rappel.current(main, resultat.worldLandmarks[0] ?? null);
+          compte++;
+          if (performance.now() - debutCompte >= 1000) {
+            imagesParSeconde.current = compte;
+            compte = 0;
+            debutCompte = performance.now();
+          }
         }
         image = requestAnimationFrame(boucle);
       };
@@ -89,5 +98,5 @@ export function useCamera(surMain: (main: Point[] | null, monde: Point[] | null)
   }, []);
 
   useEffect(() => () => arret.current(), []);
-  return { video, dessin, statut, erreur, demarrer };
+  return { video, dessin, statut, erreur, demarrer, imagesParSeconde };
 }
