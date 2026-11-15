@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Salle de contrôle · Poste électrique</title>
+<style>
+  /* Même famille que les autres projets : sable, terre cuite, coins arrondis, des phrases. */
+  :root {
+    --fond: #f6efe4; --carte: #fffaf3; --texte: #3a2e26; --doux: #8a7769; --trait: #eadfce;
+    --accent: #d9693a; --accent-pale: #f6dccb; --mer: #2f7d78; --mer-pale: #d5ece9; --soleil: #e6a23c;
+    --ombre: 0 1px 2px rgba(90,60,30,.06), 0 8px 24px rgba(90,60,30,.07); color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fond: #1f1a17; --carte: #2a2420; --texte: #f1e7db; --doux: #b3a293; --trait: #3b332d;
+      --accent: #f08a5b; --accent-pale: #4a3022; --mer: #6cc3bb; --mer-pale: #1d3634; --soleil: #f0b55a;
+      --ombre: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 16px 40px; background: var(--fond); color: var(--texte);
+         font-family: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, sans-serif; line-height: 1.45; }
+  main { max-width: 1000px; margin: 0 auto; display: grid; gap: 14px; }
+  header { padding: 0 6px; }
+  .bonjour { margin: 0; color: var(--doux); }
+  h1 { margin: 2px 0 0; font-size: clamp(1.4rem, 3vw, 1.9rem); }
+  .etat-reseau { margin: 8px 0 0; font-size: 1.05rem; }
+  .etat-reseau strong { color: var(--mer); }
+  .etat-reseau.coupure strong { color: var(--accent); }
+  .lien { margin: 4px 0 0; color: var(--doux); font-size: .88rem; }
+
+  .departs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 800px) { .departs { grid-template-columns: 1fr; } }
+  .carte { padding: 18px 20px; border-radius: 22px; background: var(--carte); box-shadow: var(--ombre); }
+  .carte h2 { margin: 0; font-size: 1.05rem; }
+  .statut { margin: 4px 0 0; font-weight: 700; color: var(--mer); }
+  .statut.ouvert { color: var(--accent); }
+  .grand { margin: 10px 0 0; font-size: 2.6rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+  .grand small { margin-left: 4px; font-size: 1.1rem; color: var(--doux); }
+  .charge { height: 8px; margin-top: 10px; border-radius: 99px; background: var(--mer-pale); overflow: hidden; }
+  .charge span { display: block; height: 100%; border-radius: 99px; background: var(--mer); transition: width .5s; }
+  .charge.haute span { background: var(--soleil); }
+  .detail { margin: 6px 0 0; color: var(--doux); font-size: .88rem; }
+  .reglage { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .reglage span { flex: 1; font-variant-numeric: tabular-nums; }
+  button { min-height: 40px; padding: 8px 14px; border: 0; border-radius: 14px; font: inherit; font-weight: 700; cursor: pointer;
+           background: var(--accent-pale); color: var(--accent); }
+  button.principal { width: 100%; margin-top: 12px; min-height: 46px; }
+  button.fermer { background: var(--mer); color: #fff; }
+  button:focus-visible { outline: 3px solid var(--texte); outline-offset: 2px; }
+  .retablir { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0; padding: 12px 16px;
+              border-radius: 16px; background: var(--accent-pale); color: var(--accent); font-weight: 600; }
+  .retablir[hidden] { display: none; }
+  .message { min-height: 1.4em; margin: 0 6px; color: var(--accent); font-weight: 600; }
+
+  ol { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  li { display: grid; grid-template-columns: 4.5em 6.5em 1fr; gap: 10px; font-size: .9rem; }
+  li time, li .ip { color: var(--doux); font-variant-numeric: tabular-nums; }
+  li.bloque .quoi strong { color: var(--accent); }
+  li.ok .quoi strong { color: var(--mer); }
+  @media (max-width: 560px) { li { grid-template-columns: 4.5em 1fr; } li .ip { display: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="bonjour">Salle de contrôle</p>
+    <h1>Le poste électrique</h1>
+    <p class="etat-reseau" id="etat" role="status">Connexion au poste…</p>
+    <p class="lien" id="lien"></p>
+  </header>
+
+  <p class="message" id="message" role="alert"></p>
+  <p class="retablir" id="retablir" hidden>
+    Un seuil de protection est anormalement bas : la protection risque de couper le courant.
+    <button type="button" id="b-retablir">Rétablir les seuils normaux</button>
+  </p>
+  <div class="departs" id="departs"></div>
+
+  <section class="carte" aria-labelledby="t-journal">
+    <h2 id="t-journal">Le journal du pare-feu</h2>
+    <p class="detail">Chaque écriture, et chaque requête bloquée. Les lectures autorisées ne sont pas notées.</p>
+    <ol id="journal"><li><span></span><span></span><span class="quoi">Rien pour l'instant.</span></li></ol>
+  </section>
+</main>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const n = (v, d = 0) => v.toLocaleString("fr-FR", { minimumFractionDigits: d, maximumFractionDigits: d });
+
+  async function commande(corps) {
+    $("message").textContent = "";
+    const r = await fetch("/commande", { method: "POST", headers: { "Content-Type": "application/json", "X-Tableau": "1" }, body: JSON.stringify(corps) });
+    const d = await r.json().catch(() => ({}));
+    if (!d.ok) $("message").textContent = d.message || "Commande impossible.";
+    lire();
+  }
+
+  $("b-retablir").onclick = () => commande({ action: "retablir" });
+
+  function carte(d, i) {
+    const s = document.createElement("section");
+    s.className = "carte";
+    const charge = d.seuil ? Math.min(100, (d.courant / d.seuil) * 100) : 0;
+    s.innerHTML = `
+      <h2></h2>
+      <p class="statut ${d.ferme ? "" : "ouvert"}">${d.ferme ? "Alimenté" : "Sans courant (disjoncteur ouvert)"}</p>
+      <p class="grand">${n(d.courant)}<small>A</small></p>
+      <div class="charge ${charge > 80 ? "haute" : ""}" aria-hidden="true"><span style="width:${charge}%"></span></div>
+      <p class="detail">${n(charge)} % du seuil de protection</p>
+      <div class="reglage">
+        <span>Seuil : <strong>${n(d.seuil)} A</strong></span>
+        <button type="button" aria-label="Baisser le seuil de 10 A">−10</button>
+        <button type="button" aria-label="Monter le seuil de 10 A">+10</button>
+      </div>
+      <button type="button" class="principal ${d.ferme ? "" : "fermer"}">${d.ferme ? "Ouvrir le disjoncteur" : "Refermer le disjoncteur"}</button>`;
+    s.querySelector("h2").textContent = d.nom; // nom inséré comme texte
+    const [moins, plus] = s.querySelectorAll(".reglage button");
+    moins.onclick = () => commande({ action: "seuil", depart: i, valeur: d.seuil - 10 });
+    plus.onclick = () => commande({ action: "seuil", depart: i, valeur: d.seuil + 10 });
+    s.querySelector(".principal").onclick = () => commande({ action: d.ferme ? "ouvrir" : "fermer", depart: i });
+    return s;
+  }
+
+  async function lire() {
+    try {
+      const e = await (await fetch("/etat")).json();
+      if (e.erreur) { $("etat").textContent = e.erreur; $("departs").replaceChildren(); return; }
+      const coupes = e.departs.filter((d) => !d.ferme).map((d) => d.nom);
+      $("retablir").hidden = !e.departs.some((d) => d.seuil < 100);
+      $("etat").className = "etat-reseau" + (coupes.length ? " coupure" : "");
+      $("etat").innerHTML = coupes.length
+        ? `<strong>Coupure</strong> : ${coupes.length === 3 ? "tout le poste est sans courant" : coupes.join(", ") + " sans courant"}.`
+        : `<strong>Tout le réseau est alimenté.</strong> ${n(e.tension, 1)} V · ${n(e.frequence, 2)} Hz`;
+      $("lien").textContent = e.viaPareFeu ? "Liaison protégée : la supervision passe par le pare-feu." : "Liaison DIRECTE avec l'automate, sans pare-feu.";
+      // On ne redessine pas les cartes si l'utilisateur est en train d'appuyer sur un bouton (focus).
+      if (!$("departs").contains(document.activeElement)) $("departs").replaceChildren(...e.departs.map(carte));
+    } catch { $("etat").textContent = "La supervision ne répond plus."; }
+    try {
+      const j = await (await fetch("/journal")).json();
+      if (j.length) $("journal").replaceChildren(...j.map((l) => {
+        const li = document.createElement("li");
+        li.className = l.autorise ? "ok" : "bloque";
+        const t = document.createElement("time"); t.textContent = l.heure;
+        const ip = document.createElement("span"); ip.className = "ip"; ip.textContent = l.ip;
+        const q = document.createElement("span"); q.className = "quoi";
+        const b = document.createElement("strong"); b.textContent = l.autorise ? "Autorisé" : "BLOQUÉ";
+        q.append(b, ` · ${l.requete} · ${l.raison}`);
+        li.append(t, ip, q); return li;
+      }));
+    } catch {}
+  }
+  lire();
+  setInterval(lire, 1000);
+</script>
+</body>
+</html>
