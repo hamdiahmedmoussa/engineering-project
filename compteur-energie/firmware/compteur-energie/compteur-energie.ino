@@ -13,6 +13,7 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include "config.h"
+#include "securite.h"
 #include "mesure.h"
 #include "page.h"
 
@@ -72,8 +73,8 @@ void connecterWifi() {
   } else {
     // Pas de Wi-Fi : le compteur crée son propre réseau.
     WiFi.mode(WIFI_AP);
-    WiFi.softAP(RESEAU_COMPTEUR_NOM, RESEAU_COMPTEUR_MOT_DE_PASSE);
-    Serial.print("Wi-Fi introuvable. Connecte-toi au réseau « " RESEAU_COMPTEUR_NOM " », puis ouvre http://");
+    WiFi.softAP(RESEAU_BOITIER_NOM, RESEAU_BOITIER_MOT_DE_PASSE);
+    Serial.print("Wi-Fi introuvable. Connecte-toi au réseau « " RESEAU_BOITIER_NOM " », puis ouvre http://");
     Serial.println(WiFi.softAPIP());
   }
   // Sur ordinateur (et iPhone), l'adresse http://compteur.local fonctionne aussi.
@@ -86,8 +87,8 @@ void setup() {
   Serial.println(MODE_SIMULATION ? "Compteur d'énergie (MODE SIMULATION)" : "Compteur d'énergie");
 
   connecterWifi();
-  serveur.on("/", []() { serveur.send_P(200, "text/html; charset=utf-8", PAGE_TABLEAU); });
-  serveur.on("/mesures", envoyerMesures);
+  serveur.on("/", []() { if (autorise(serveur)) serveur.send_P(200, "text/html; charset=utf-8", PAGE_TABLEAU); });
+  serveur.on("/mesures", []() { if (autorise(serveur)) envoyerMesures(); });
   serveur.begin();
   derniereMesure = millis();
 }

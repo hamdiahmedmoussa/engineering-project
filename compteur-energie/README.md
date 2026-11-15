@@ -124,3 +124,10 @@ g++ -std=c++17 -o test tests/test_mesure.cpp && ./test
 Le courant du secteur est une sinusoïde à 50 Hz : sa moyenne vaut 0. On utilise donc la **valeur efficace** :
 on élève chaque échantillon au carré, on fait la moyenne, puis la racine carrée.
 On mesure 2 000 échantillons sur 200 ms, soit **10 périodes entières**, pour que le calcul soit exact.
+
+## Sécurité
+
+Avant de téléverser, choisis dans `config.h` un **mot de passe pour le tableau de bord** (`MOT_DE_PASSE_TABLEAU`)
+et un **mot de passe pour le réseau du boîtier** (`RESEAU_BOITIER_MOT_DE_PASSE`) : avec ceux de l'exemple,
+le programme refuse de compiler. Le navigateur demandera ensuite l'identifiant et le mot de passe.
+Détails : [`SECURITE.md`](../SECURITE.md).

@@ -18,6 +18,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include "config.h"
+#include "securite.h"
 #include "solaire.h"
 #include "page.h"
 
@@ -163,9 +164,9 @@ void setup() {
   }
 
   connecterWifi();
-  serveur.on("/", []() { serveur.send_P(200, "text/html; charset=utf-8", PAGE_SOLAIRE); });
-  serveur.on("/mesures", envoyerMesures);
-  serveur.on("/courbe", envoyerCourbe);
+  serveur.on("/", []() { if (autorise(serveur)) serveur.send_P(200, "text/html; charset=utf-8", PAGE_SOLAIRE); });
+  serveur.on("/mesures", []() { if (autorise(serveur)) envoyerMesures(); });
+  serveur.on("/courbe", []() { if (autorise(serveur)) envoyerCourbe(); });
   serveur.begin();
   derniereMesure = derniereTemperature = derniereMinute = millis();
 }

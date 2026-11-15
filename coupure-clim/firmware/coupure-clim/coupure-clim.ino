@@ -22,6 +22,7 @@
 #include <IRutils.h>
 #include <DHT.h>
 #include "config.h"
+#include "securite.h"
 #include "regles.h"
 #include "page.h"
 
@@ -309,9 +310,10 @@ void setup() {
   dernierePresenceMs = millis();
 
   connecterWifi();
-  serveur.on("/", []() { serveur.send_P(200, "text/html; charset=utf-8", PAGE_CLIM); });
-  serveur.on("/etat", envoyerEtat);
-  serveur.on("/commande", HTTP_POST, recevoirCommande);
+  serveur.on("/", []() { if (autorise(serveur)) serveur.send_P(200, "text/html; charset=utf-8", PAGE_CLIM); });
+  serveur.on("/etat", []() { if (autorise(serveur)) envoyerEtat(); });
+  serveur.on("/commande", HTTP_POST, []() { if (commandeAutorisee(serveur)) recevoirCommande(); });
+  serveur.collectHeaders(&EN_TETE_COMMANDE, 1);  // pour pouvoir lire l'en-tête X-Tableau
   serveur.begin();
   noter("Boîtier démarré");
 }

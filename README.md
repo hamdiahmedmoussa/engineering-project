@@ -11,6 +11,11 @@ Mes projets d'ingénierie (Électricité & Énergie, électronique, vision par o
 | [`station-meteo/`](station-meteo/) | Station météo et qualité de l'air : température ressentie, poussière (PM2,5 et PM10) avec conseils, tendance de la pression. ESP32 + BME280 + PMS5003. |
 | [`suivi-solaire/`](suivi-solaire/) | Suivi d'un panneau solaire : production réelle, perte due à la chaleur, effet de la poussière. ESP32 + INA219 + DS18B20. |
 
+## Sécurité
+
+Les boîtiers Wi-Fi sont protégés par mot de passe et refusent de compiler avec les mots de passe d'exemple.
+Menaces, protections et prochaines étapes : [`SECURITE.md`](SECURITE.md).
+
 ## Prochains projets (dans l'ordre)
 
 1. ~~Compteur d'énergie connecté~~ (fait)

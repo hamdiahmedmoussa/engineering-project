@@ -36,3 +36,8 @@
 #define BROCHE_IR_RECEPTEUR 15           // récepteur infrarouge (lit la vraie télécommande)
 #define BROCHE_PRESENCE 27               // sortie « OUT » du radar LD2410 (HAUT = quelqu'un)
 #define BROCHE_DHT 26                    // capteur température / humidité DHT22
+
+// --- Accès au tableau de bord : OBLIGATOIRE. Le programme REFUSE de compiler avec les valeurs
+//     d'exemple ci-dessous (elles sont publiques sur GitHub). 10 caractères minimum. ---
+#define UTILISATEUR_TABLEAU "hamdi"
+#define MOT_DE_PASSE_TABLEAU "change-moi"

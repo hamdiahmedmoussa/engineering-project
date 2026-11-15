@@ -100,9 +100,15 @@ g++ -std=c++17 -o test tests/test_regles.cpp && ./test
 
 ## 6. Bon à savoir
 
-- Toute personne connectée à ton Wi-Fi peut ouvrir la page et allumer ou éteindre la clim.
-  À la maison, c'est acceptable. Pour un bureau, il faudrait ajouter un mot de passe.
+- La page et les commandes sont protégées par mot de passe, et les commandes refusent les autres sites (voir `SECURITE.md`).
 - Si la compilation échoue dans les fichiers d'IRremoteESP8266, installe la **dernière version** de la
   bibliothèque. Si le problème continue, essaie la carte **esp32 version 2.0.17** dans le gestionnaire de cartes.
 - Ce projet utilise le même ESP32 que le compteur d'énergie : tu peux même les réunir plus tard dans un
   seul boîtier qui mesure la consommation **et** pilote la clim.
+
+## Sécurité
+
+Avant de téléverser, choisis dans `config.h` un **mot de passe pour le tableau de bord** (`MOT_DE_PASSE_TABLEAU`)
+et un **mot de passe pour le réseau du boîtier** (`RESEAU_BOITIER_MOT_DE_PASSE`) : avec ceux de l'exemple,
+le programme refuse de compiler. Le navigateur demandera ensuite l'identifiant et le mot de passe.
+Détails : [`SECURITE.md`](../SECURITE.md).

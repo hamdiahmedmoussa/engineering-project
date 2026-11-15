@@ -134,7 +134,7 @@ const char PAGE_CLIM[] PROGMEM = R"rawliteral(<!doctype html>
 
   async function commande(action) {
     $("b-eteindre").disabled = $("b-allumer").disabled = true;
-    try { await fetch("/commande?action=" + action, { method: "POST" }); } catch (e) {}
+    try { await fetch("/commande?action=" + action, { method: "POST", headers: { "X-Tableau": "1" } }); } catch (e) {}
     await lire();
     $("b-eteindre").disabled = $("b-allumer").disabled = false;
   }

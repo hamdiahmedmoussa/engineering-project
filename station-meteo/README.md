@@ -100,3 +100,10 @@ g++ -std=c++17 -o test tests/test_meteo.cpp && ./test
   faites maison : Djibouti y a très peu de capteurs, ta station serait utile à tout le monde.
 - **Prévenir sur le téléphone** quand la poussière dépasse un seuil (notification par Telegram, par exemple).
 - **Comparer avec le suivi solaire** : un jour de poussière, combien le panneau perd-il ?
+
+## Sécurité
+
+Avant de téléverser, choisis dans `config.h` un **mot de passe pour le tableau de bord** (`MOT_DE_PASSE_TABLEAU`)
+et un **mot de passe pour le réseau du boîtier** (`RESEAU_BOITIER_MOT_DE_PASSE`) : avec ceux de l'exemple,
+le programme refuse de compiler. Le navigateur demandera ensuite l'identifiant et le mot de passe.
+Détails : [`SECURITE.md`](../SECURITE.md).

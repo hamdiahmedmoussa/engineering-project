@@ -15,6 +15,7 @@
 #include <time.h>
 #include <Adafruit_BME280.h>
 #include "config.h"
+#include "securite.h"
 #include "meteo.h"
 #include "pms.h"
 #include "page.h"
@@ -191,9 +192,9 @@ void setup() {
     digitalWrite(BROCHE_PMS_SET, LOW);
   }
   connecterWifi();
-  serveur.on("/", []() { serveur.send_P(200, "text/html; charset=utf-8", PAGE_METEO); });
-  serveur.on("/mesures", envoyerMesures);
-  serveur.on("/courbe", envoyerCourbe);
+  serveur.on("/", []() { if (autorise(serveur)) serveur.send_P(200, "text/html; charset=utf-8", PAGE_METEO); });
+  serveur.on("/mesures", []() { if (autorise(serveur)) envoyerMesures(); });
+  serveur.on("/courbe", []() { if (autorise(serveur)) envoyerCourbe(); });
   serveur.begin();
   lireBME();
 }

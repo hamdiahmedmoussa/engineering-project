@@ -21,6 +21,11 @@
 #define SEUIL_BRUIT_A 0.08       // en dessous, on affiche 0 A
 #define TENSION_SECTEUR 220.0    // tension nominale à Djibouti (V). La pince ne mesure pas la tension.
 
-// --- Réseau créé par le compteur quand le Wi-Fi de la maison est introuvable (8 caractères minimum). ---
-#define RESEAU_COMPTEUR_NOM "Compteur-Energie"
-#define RESEAU_COMPTEUR_MOT_DE_PASSE "change-moi-2026"
+// --- Réseau créé par le compteur quand le Wi-Fi de la maison est introuvable (8 caractères minimum, à CHANGER : obligatoire). ---
+#define RESEAU_BOITIER_NOM "Compteur-Energie"
+#define RESEAU_BOITIER_MOT_DE_PASSE "change-moi-2026"
+
+// --- Accès au tableau de bord : OBLIGATOIRE. Le programme REFUSE de compiler avec les valeurs
+//     d'exemple ci-dessous (elles sont publiques sur GitHub). 10 caractères minimum. ---
+#define UTILISATEUR_TABLEAU "hamdi"
+#define MOT_DE_PASSE_TABLEAU "change-moi"

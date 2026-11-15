@@ -10,7 +10,7 @@
 #define WIFI_NOM "nom-de-ton-wifi"
 #define WIFI_MOT_DE_PASSE "mot-de-passe-du-wifi"
 
-// --- Réseau créé par le boîtier si le Wi-Fi est introuvable (8 caractères minimum) ---
+// --- Réseau créé par le boîtier si le Wi-Fi est introuvable (8 caractères minimum, à CHANGER : obligatoire) ---
 #define RESEAU_BOITIER_NOM "Suivi-Solaire"
 #define RESEAU_BOITIER_MOT_DE_PASSE "change-moi-2026"
 
@@ -28,3 +28,8 @@
 
 // --- Fuseau horaire de Djibouti : UTC+3, sans heure d'été ---
 #define DECALAGE_UTC_S (3 * 3600)
+
+// --- Accès au tableau de bord : OBLIGATOIRE. Le programme REFUSE de compiler avec les valeurs
+//     d'exemple ci-dessous (elles sont publiques sur GitHub). 10 caractères minimum. ---
+#define UTILISATEUR_TABLEAU "hamdi"
+#define MOT_DE_PASSE_TABLEAU "change-moi"

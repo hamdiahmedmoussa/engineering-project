@@ -26,3 +26,8 @@
 #define BROCHE_PMS_RX 16    // ← fil TX du PMS5003
 #define BROCHE_PMS_TX 17    // → fil RX du PMS5003
 #define BROCHE_PMS_SET 4    // → fil SET du PMS5003 (HAUT = réveillé, BAS = endormi)
+
+// --- Accès au tableau de bord : OBLIGATOIRE. Le programme REFUSE de compiler avec les valeurs
+//     d'exemple ci-dessous (elles sont publiques sur GitHub). 10 caractères minimum. ---
+#define UTILISATEUR_TABLEAU "hamdi"
+#define MOT_DE_PASSE_TABLEAU "change-moi"
